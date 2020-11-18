@@ -24,9 +24,9 @@ class Bits
         $ids = [];
         $bitExplodedLength = count($bitExploded);
         for ($i = 0; $i< $bitExplodedLength; $i++) {
-            $bit = $bitExploded[$i];
+            $currentBit = $bitExploded[$i];
             $nextIndex = $index + 1;
-            if ($bit === '1' && (array_search($nextIndex, $ids) === false)) {
+            if ($currentBit === '1') {
                 $ids[] = $nextIndex;
             }
             $index++;
@@ -119,11 +119,11 @@ class Bits
 		return intval(substr($bitString, $start, $length), 2);
 	}
 
-	/**
-	 * @param  int $number
-	 * @param  int $numBits
-	 * @return string
-	 */
+    /**
+     * @param  int       $number
+     * @param  int|null  $numBits
+     * @return string
+     */
 	private static function encodeIntToBits(int $number, int $numBits = null): string
 	{
 		$bitString = "";
@@ -151,11 +151,11 @@ class Bits
 		return self::encodeIntToBits($value === true ? 1 : 0, 1);
 	}
 
-	/**
-	 * @param  DateTime $date
-	 * @param  int      $numBits
-	 * @return string
-	 */
+    /**
+     * @param  DateTime  $date
+     * @param  int|null  $numBits
+     * @return string
+     */
 	private static function encodeDateToBits(DateTime $date, int $numBits = null): string
 	{
 		return self::encodeIntToBits($date->getTimestamp() * 10, $numBits);
@@ -190,9 +190,11 @@ class Bits
 	public static function decodeFromBase64(string $string): string
 	{
 		// add padding
-		while (strlen($string) % 4 !== 0) {
-			$string .= "=";
-		}
+        $padding = 4 - strlen($string) % 4;
+        if ($padding < 4) {
+            $string = str_pad($string, $padding, $padding);
+        }
+
 		// replace unsafe characters
 		$string = str_replace("-", "+", $string);
 		$string = str_replace("_", "/", $string);
@@ -202,7 +204,8 @@ class Bits
 			throw new InvalidConsentStringException();
 		}
 		$inputBits = "";
-		for ($i = 0; $i < strlen($bytes); $i++) {
+		$bytesLength = strlen($bytes);
+		for ($i = 0; $i < $bytesLength; $i++) {
 			$bitString = decbin(ord($bytes[$i]));
 			$inputBits .= self::padLeft($bitString, 8 - strlen($bitString));
 		}
