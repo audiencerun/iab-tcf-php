@@ -1,0 +1,39 @@
+{
+    "name": "blackcover/iabtcf",
+    "description": "IAB TCF Consent String Decoder & Encoder",
+    "version": "1.0.0",
+    "type": "library",
+    "keywords": [
+        "IAB",
+        "Consent String",
+        "TCF",
+        "TCFv2"
+    ],
+    "authors": [
+        {
+            "name": "Nicolas Bringas",
+            "email": "nicolas.bringas@dynata.com"
+        },
+        {
+            "name": "Thomas Heniart",
+            "email": "t.heniart@blackcover.fr"
+        }
+    ],
+    "require": {
+        "php": "^7.2",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "IABTcf\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "IABTcfTest\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.5"
+    }
+}
