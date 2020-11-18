@@ -1,0 +1,11 @@
+image: gitad.sd1.fr:4567/blackcover/adnetwork_symfony:latest
+
+stages:
+  - test-unit
+
+test_unit:
+  stage: test-unit
+  before_script:
+    - composer install || true
+  script:
+    - ./vendor/bin/phpunit tests
