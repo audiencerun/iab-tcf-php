@@ -71,24 +71,35 @@ class Bits
 	}
 
 	/**
-	 * @param  string $string
-	 * @param  int $padding
+	 * @param  string  $string
+	 * @param  int     $leftPadding
 	 * @return string
 	 */
-	public static function padLeft(string $string, int $padding): string
+	public static function padLeft(string $string, int $leftPadding): string
 	{
-        return str_repeat('0', $padding) . $string;
+	    $padding = self::validPadding($leftPadding);
+		return str_repeat('0', $padding) . $string;
 	}
 
 	/**
-	 * @param  string $string
-	 * @param  int $padding
+	 * @param  string  $string
+	 * @param  int     $rightPadding
 	 * @return string
 	 */
-	public static function padRight(string $string, int $padding): string
+	public static function padRight(string $string, int $rightPadding): string
 	{
+        $padding = self::validPadding($rightPadding);
 		return $string . str_repeat('0', $padding);
 	}
+
+    /**
+     * @param  int  $padding
+     * @return int
+     */
+	private static function validPadding(int $padding): int
+    {
+        return $padding < 0 ? 0 : $padding;
+    }
 
 	/**
 	 * @param string $bitString
@@ -193,10 +204,9 @@ class Bits
 		$bytesLength = strlen($bytes);
 		for ($i = 0; $i < $bytesLength; $i++) {
 			$bitString = decbin(ord($bytes[$i]));
-			$padding = 8 - strlen($bitString);
-			if ($padding > 0) {
-                $inputBits .= self::padLeft($bitString, $padding);
-            }
+			$leftPadding = 8 - strlen($bitString);
+			$inputBits .= self::padLeft($bitString, $leftPadding);
+
 		}
 		return $inputBits;
 	}
