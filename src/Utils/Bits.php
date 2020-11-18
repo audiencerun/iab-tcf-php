@@ -19,17 +19,19 @@ class Bits
 	public static function decodeBitsToIds(string $bitString): array
 	{
 		$index = 0;
-		$reduce = function ($acc, $bit) use (&$index) {
-			if ($bit === '1' && (array_search($index + 1, $acc) === false)) {
-				$acc[] = $index + 1;
-			}
-			$index++;
-
-			return $acc;
-		};
 		$bitExploded = str_split($bitString, 1);
 
-		return array_reduce($bitExploded, $reduce, []);
+        $ids = [];
+        for ($i = 0; $i<count($bitExploded); $i++) {
+            $bit = $bitExploded[$i];
+            $nextIndex = $index + 1;
+            if ($bit === '1' && (array_search($nextIndex, $ids) === false)) {
+                $ids[] = $nextIndex;
+            }
+            $index++;
+        }
+
+        return $ids;
 	}
 
 	/**
