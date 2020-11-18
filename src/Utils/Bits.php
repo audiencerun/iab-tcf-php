@@ -416,20 +416,19 @@ class Bits
 	private static function decodeFields(string $bitString, array $fields, int $startPosition = 0): array
 	{
 		$position = $startPosition;
-		$reducer = function(array $acc, Field $field) use ($bitString, &$position): array {
-			$fieldDecoded = self::decodeField($bitString, $acc, $position, $field);
-			$fieldValue = isset($fieldDecoded['fieldValue']) ? $fieldDecoded['fieldValue'] : null;
-			$newPosition = isset($fieldDecoded['newPosition']) ? $fieldDecoded['newPosition'] : null;
-			if (! is_null($fieldValue)) {
-				$acc[$field->getName()] = $fieldValue;
-			}
-			if (! is_null($newPosition)) {
-				$position = $newPosition;
-			}
 
-			return $acc;
-		};
-		$decodedObject = array_reduce($fields, $reducer, []);
+		$decodedObject = [];
+		foreach ($fields as $field) {
+            $fieldDecoded = self::decodeField($bitString, $decodedObject, $position, $field);
+            $fieldValue = isset($fieldDecoded['fieldValue']) ? $fieldDecoded['fieldValue'] : null;
+            $newPosition = isset($fieldDecoded['newPosition']) ? $fieldDecoded['newPosition'] : null;
+            if (! is_null($fieldValue)) {
+                $decodedObject[$field->getName()] = $fieldValue;
+            }
+            if (! is_null($newPosition)) {
+                $position = $newPosition;
+            }
+        }
 		$decodedObject['newPosition'] = $position;
 
 		return $decodedObject;
