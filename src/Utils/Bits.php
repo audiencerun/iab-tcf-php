@@ -22,7 +22,8 @@ class Bits
 		$bitExploded = str_split($bitString, 1);
 
         $ids = [];
-        for ($i = 0; $i<count($bitExploded); $i++) {
+        $bitExplodedLength = count($bitExploded);
+        for ($i = 0; $i< $bitExplodedLength; $i++) {
             $bit = $bitExploded[$i];
             $nextIndex = $index + 1;
             if ($bit === '1' && (array_search($nextIndex, $ids) === false)) {
