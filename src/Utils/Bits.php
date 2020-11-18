@@ -71,27 +71,13 @@ class Bits
 	}
 
 	/**
-	 * @param  int $count
-	 * @param  string $string
-	 * @return string
-	 */
-	private static function repeat(int $count, string $string = '0'): string
-	{
-		$padString = "";
-		for ($i = 0; $i < $count; $i++) {
-			$padString .= $string;
-		}
-		return $padString;
-	}
-
-	/**
 	 * @param  string $string
 	 * @param  int $padding
 	 * @return string
 	 */
 	public static function padLeft(string $string, int $padding): string
 	{
-		return self::repeat(max([0, $padding])) . $string;
+        return str_repeat('0', $padding) . $string;
 	}
 
 	/**
@@ -101,7 +87,7 @@ class Bits
 	 */
 	public static function padRight(string $string, int $padding): string
 	{
-		return $string . self::repeat(max([0, $padding]));
+		return $string . str_repeat('0', $padding);
 	}
 
 	/**
@@ -207,7 +193,10 @@ class Bits
 		$bytesLength = strlen($bytes);
 		for ($i = 0; $i < $bytesLength; $i++) {
 			$bitString = decbin(ord($bytes[$i]));
-			$inputBits .= self::padLeft($bitString, 8 - strlen($bitString));
+			$padding = 8 - strlen($bitString);
+			if ($padding > 0) {
+                $inputBits .= self::padLeft($bitString, $padding);
+            }
 		}
 		return $inputBits;
 	}
