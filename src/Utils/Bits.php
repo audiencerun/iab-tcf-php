@@ -96,7 +96,7 @@ class Bits
 	public static function padLeft(string $string, int $leftPadding): string
 	{
 	    $padLeftCallKey = "$string-$leftPadding";
-	    if (array_key_exists($padLeftCallKey, static::$padLeftCalls)) {
+	    if (isset(static::$padLeftCalls[$padLeftCallKey])) {
             $padLeftCall = static::$padLeftCalls[$padLeftCallKey];
         } else {
             $padding = self::validPadding($leftPadding);
