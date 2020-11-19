@@ -1,6 +1,6 @@
 {
     "name": "blackcover/iabtcf",
-    "description": "IAB TCF Consent String Decoder & Encoder",
+    "description": "Fork of https://github.com/dynata/iab-tcf-php",
     "version": "1.0.0",
     "type": "library",
     "keywords": [
