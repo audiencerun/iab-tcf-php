@@ -12,24 +12,45 @@ use IABTcf\Field;
 
 class Bits
 {
-	/**
+    private const NEW_POSITION = 'newPosition';
+    private const FIELD_VALUE = 'fieldValue';
+    private const DASH = "-";
+    private const PLUS = "+";
+    private const SLASH = "/";
+    private const UNDERSCORE = "_";
+    private const EQUAL = '=';
+    private const EMPTY_STR = '';
+    private const INT = 'int';
+    private const BOOL = 'bool';
+    private const DATE = 'date';
+    private const BITS = 'bits';
+    private const LIST_TYPE = 'list';
+    private const LANGUAGE = 'language';
+    private const NEGATIVE_BIT = '0';
+
+    private static $padLeftCalls = [];
+
+    /**
 	 * @param $bitString
 	 * @return array
 	 */
 	public static function decodeBitsToIds(string $bitString): array
 	{
 		$index = 0;
-		$reduce = function ($acc, $bit) use (&$index) {
-			if ($bit === '1' && (array_search($index + 1, $acc) === false)) {
-				$acc[] = $index + 1;
-			}
-			$index++;
-
-			return $acc;
-		};
 		$bitExploded = str_split($bitString, 1);
 
-		return array_reduce($bitExploded, $reduce, []);
+        $ids = [];
+        $bitExplodedLength = count($bitExploded);
+        for ($i = 0; $i< $bitExplodedLength; $i++) {
+            $currentBit = $bitExploded[$i];
+            $nextIndex = $index + 1;
+            if ($currentBit === '1') {
+                $ids[] = $nextIndex;
+            }
+            $index++;
+        }
+
+        return $ids;
 	}
 
 	/**
@@ -68,38 +89,42 @@ class Bits
 	}
 
 	/**
-	 * @param  int $count
-	 * @param  string $string
+	 * @param  string  $string
+	 * @param  int     $leftPadding
 	 * @return string
 	 */
-	private static function repeat(int $count, string $string = '0'): string
+	public static function padLeft(string $string, int $leftPadding): string
 	{
-		$padString = "";
-		for ($i = 0; $i < $count; $i++) {
-			$padString .= $string;
-		}
-		return $padString;
+	    $padLeftCallKey = "$string-$leftPadding";
+	    if (isset(static::$padLeftCalls[$padLeftCallKey])) {
+            $padLeftCall = static::$padLeftCalls[$padLeftCallKey];
+        } else {
+            $padding = self::validPadding($leftPadding);
+            $padLeftCall = str_repeat(self::NEGATIVE_BIT, $padding) . $string;
+            static::$padLeftCalls[$padLeftCallKey] = $padLeftCall;
+        }
+        return $padLeftCall;
 	}
 
 	/**
-	 * @param  string $string
-	 * @param  int $padding
+	 * @param  string  $string
+	 * @param  int     $rightPadding
 	 * @return string
 	 */
-	public static function padLeft(string $string, int $padding): string
+	public static function padRight(string $string, int $rightPadding): string
 	{
-		return self::repeat(max([0, $padding])) . $string;
+        $padding = self::validPadding($rightPadding);
+		return $string . str_repeat(self::NEGATIVE_BIT, $padding);
 	}
 
-	/**
-	 * @param  string $string
-	 * @param  int $padding
-	 * @return string
-	 */
-	public static function padRight(string $string, int $padding): string
-	{
-		return $string . self::repeat(max([0, $padding]));
-	}
+    /**
+     * @param  int  $padding
+     * @return int
+     */
+	private static function validPadding(int $padding): int
+    {
+        return $padding < 0 ? 0 : $padding;
+    }
 
 	/**
 	 * @param string $bitString
@@ -116,14 +141,14 @@ class Bits
 		return intval(substr($bitString, $start, $length), 2);
 	}
 
-	/**
-	 * @param  int $number
-	 * @param  int $numBits
-	 * @return string
-	 */
+    /**
+     * @param  int       $number
+     * @param  int|null  $numBits
+     * @return string
+     */
 	private static function encodeIntToBits(int $number, int $numBits = null): string
 	{
-		$bitString = "";
+		$bitString = self::EMPTY_STR;
 		if (is_numeric($number)) {
 			$bitString = decbin(intval($number, 10));
 		}
@@ -148,11 +173,11 @@ class Bits
 		return self::encodeIntToBits($value === true ? 1 : 0, 1);
 	}
 
-	/**
-	 * @param  DateTime $date
-	 * @param  int      $numBits
-	 * @return string
-	 */
+    /**
+     * @param  DateTime  $date
+     * @param  int|null  $numBits
+     * @return string
+     */
 	private static function encodeDateToBits(DateTime $date, int $numBits = null): string
 	{
 		return self::encodeIntToBits($date->getTimestamp() * 10, $numBits);
@@ -187,21 +212,26 @@ class Bits
 	public static function decodeFromBase64(string $string): string
 	{
 		// add padding
-		while (strlen($string) % 4 !== 0) {
-			$string .= "=";
-		}
+        $padding = 4 - strlen($string) % 4;
+        if ($padding < 4) {
+            $string = str_pad($string, $padding, $padding);
+        }
+
 		// replace unsafe characters
-		$string = str_replace("-", "+", $string);
-		$string = str_replace("_", "/", $string);
+		$string = str_replace(self::DASH, self::PLUS, $string);
+		$string = str_replace(self::UNDERSCORE, self::SLASH, $string);
 
 		$bytes = base64_decode($string, true);
 		if ($bytes === false) {
 			throw new InvalidConsentStringException();
 		}
-		$inputBits = "";
-		for ($i = 0; $i < strlen($bytes); $i++) {
+		$inputBits = self::EMPTY_STR;
+		$bytesLength = strlen($bytes);
+		for ($i = 0; $i < $bytesLength; $i++) {
 			$bitString = decbin(ord($bytes[$i]));
-			$inputBits .= self::padLeft($bitString, 8 - strlen($bitString));
+			$leftPadding = 8 - strlen($bitString);
+			$inputBits .= self::padLeft($bitString, $leftPadding);
+
 		}
 		return $inputBits;
 	}
@@ -242,7 +272,7 @@ class Bits
 	public static function decodeConsentStringBitValue(string $bitString, array $definitionMap): array
 	{
 		$decodedObject = self::decodeFields($bitString, $definitionMap['fields']);
-		unset($decodedObject['newPosition']);
+		unset($decodedObject[self::NEW_POSITION]);
 
 		return $decodedObject;
 	}
@@ -257,26 +287,26 @@ class Bits
 	public static function encodeField(array $input, Field $field, bool $validate = true): string
 	{
 		if ($validate && (! $field->getValidator()($input))) {
-			return '';
+			return self::EMPTY_STR;
 		}
 		$bitCount = $field->getNumBits()($input);
 		$inputValue = $input[$field->getName()];
-		$fieldValue = is_null($inputValue) ? '' : $inputValue;
+		$fieldValue = is_null($inputValue) ? self::EMPTY_STR : $inputValue;
 		switch ($field->getType()) {
-			case 'int':
+			case self::INT:
 				return self::encodeIntToBits($fieldValue, $bitCount);
-			case 'bool':
+			case self::BOOL:
 				return self::encodeBoolToBits($fieldValue);
-			case 'date':
+			case self::DATE:
 				return self::encodeDateToBits($fieldValue, $bitCount);
-			case 'bits':
+			case self::BITS:
 				return substr(self::padRight($fieldValue, $bitCount - strlen($fieldValue)), 0, $bitCount);
-			case 'list':
+			case self::LIST_TYPE:
 				$reduce = function ($acc, $listValue) use ($field) {
 					return $acc . self::encodeFields($listValue, $field->getFields());
 				};
-				return array_reduce($fieldValue, $reduce, '');
-			case 'language':
+				return array_reduce($fieldValue, $reduce, self::EMPTY_STR);
+			case self::LANGUAGE:
 				return self::encodeLanguageToBits($fieldValue, $bitCount);
 			default:
 				throw new InvalidEncodingTypeException();
@@ -294,13 +324,13 @@ class Bits
 			return $acc . self::encodeField($input, $field);
 		};
 
-		return array_reduce($fields, $reduce, '');
+		return array_reduce($fields, $reduce, self::EMPTY_STR);
 	}
 
 	public static function encodeBitStringToBase64(string $bitString): string {
 		// Pad length to multiple of 8
 		$paddedBinaryValue = self::padRight($bitString, 7 - ((strlen($bitString) + 7) % 8));
-		$bytes = "";
+		$bytes = self::EMPTY_STR;
 		for ($i = 0; $i < strlen($paddedBinaryValue); $i += 8) {
 			$bytes .= chr(intval(substr($paddedBinaryValue, $i, 8), 2));
 		}
@@ -313,12 +343,12 @@ class Bits
 	 */
 	private static function urlSafeB64Encode(string $bytes): string {
 		return str_replace(
-			"+",
-			"-",
+			self::PLUS,
+            self::DASH,
 			str_replace(
-				"/",
-				"_",
-				rtrim(base64_encode($bytes), '=')
+				self::SLASH,
+                self::UNDERSCORE,
+				rtrim(base64_encode($bytes), self::EQUAL)
 			)
 		);
 	}
@@ -335,28 +365,28 @@ class Bits
 	{
 		if (! $field->getValidator()($output)) {
 			// Not decoding this field so make sure we start parsing the next field at the same point
-			return ['newPosition' => $startPosition];
+			return [self::NEW_POSITION => $startPosition];
 		}
 
 		$returnValue = [];
 		$bitCount = $field->getNumBits()($output);
 		if (! is_null($bitCount)) {
-			$returnValue['newPosition'] = $startPosition + $bitCount;
+			$returnValue[self::NEW_POSITION] = $startPosition + $bitCount;
 		}
 
 		switch ($field->getType()) {
-			case 'int':
-				return array_merge(['fieldValue' => self::decodeBitsToInt($bitString, $startPosition, $bitCount)], $returnValue);
-			case 'bool':
-				return array_merge(['fieldValue' => self::decodeBitsToBool($bitString, $startPosition)], $returnValue);
-			case 'date':
-				return array_merge(['fieldValue' => self::decodeBitsToDate($bitString, $startPosition, $bitCount)], $returnValue);
-			case 'bits':
-				return array_merge(['fieldValue' => substr($bitString, $startPosition, $bitCount)], $returnValue);
-			case 'list':
+			case self::INT:
+				return array_merge([self::FIELD_VALUE => self::decodeBitsToInt($bitString, $startPosition, $bitCount)], $returnValue);
+			case self::BOOL:
+				return array_merge([self::FIELD_VALUE => self::decodeBitsToBool($bitString, $startPosition)], $returnValue);
+			case self::DATE:
+				return array_merge([self::FIELD_VALUE => self::decodeBitsToDate($bitString, $startPosition, $bitCount)], $returnValue);
+			case self::BITS:
+				return array_merge([self::FIELD_VALUE => substr($bitString, $startPosition, $bitCount)], $returnValue);
+			case self::LIST_TYPE:
 				return array_merge(self::decodeList($bitString, $output, $startPosition, $field), $returnValue);
-			case 'language':
-				return array_merge(['fieldValue' => self::decodeBitsToLanguage($bitString, $startPosition, $bitCount)], $returnValue);
+			case self::LANGUAGE:
+				return array_merge([self::FIELD_VALUE => self::decodeBitsToLanguage($bitString, $startPosition, $bitCount)], $returnValue);
 			default:
 				throw new InvalidEncodingTypeException();
 		}
@@ -381,12 +411,12 @@ class Bits
 		$fieldValue = [];
 		for ($i = 0; $i < $listEntryCount; $i++) {
 			$decodedFields = self::decodeFields($bitString, $fields, $newPosition);
-			$newPosition = $decodedFields['newPosition'];
-			unset($decodedFields['newPosition']);
+			$newPosition = $decodedFields[self::NEW_POSITION];
+			unset($decodedFields[self::NEW_POSITION]);
 			$fieldValue[] = $decodedFields;
 		}
 
-		return ['fieldValue' => $fieldValue, 'newPosition' => $newPosition];
+		return [self::FIELD_VALUE => $fieldValue, self::NEW_POSITION => $newPosition];
 	}
 
 	/**
@@ -411,21 +441,20 @@ class Bits
 	private static function decodeFields(string $bitString, array $fields, int $startPosition = 0): array
 	{
 		$position = $startPosition;
-		$reducer = function(array $acc, Field $field) use ($bitString, &$position): array {
-			$fieldDecoded = self::decodeField($bitString, $acc, $position, $field);
-			$fieldValue = isset($fieldDecoded['fieldValue']) ? $fieldDecoded['fieldValue'] : null;
-			$newPosition = isset($fieldDecoded['newPosition']) ? $fieldDecoded['newPosition'] : null;
-			if (! is_null($fieldValue)) {
-				$acc[$field->getName()] = $fieldValue;
-			}
-			if (! is_null($newPosition)) {
-				$position = $newPosition;
-			}
 
-			return $acc;
-		};
-		$decodedObject = array_reduce($fields, $reducer, []);
-		$decodedObject['newPosition'] = $position;
+		$decodedObject = [];
+		foreach ($fields as $field) {
+            $fieldDecoded = self::decodeField($bitString, $decodedObject, $position, $field);
+            $fieldValue = isset($fieldDecoded[self::FIELD_VALUE]) ? $fieldDecoded[self::FIELD_VALUE] : null;
+            $newPosition = isset($fieldDecoded[self::NEW_POSITION]) ? $fieldDecoded[self::NEW_POSITION] : null;
+            if (! is_null($fieldValue)) {
+                $decodedObject[$field->getName()] = $fieldValue;
+            }
+            if (! is_null($newPosition)) {
+                $position = $newPosition;
+            }
+        }
+		$decodedObject[self::NEW_POSITION] = $position;
 
 		return $decodedObject;
 	}
