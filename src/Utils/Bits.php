@@ -12,7 +12,25 @@ use IABTcf\Field;
 
 class Bits
 {
-	/**
+    private const NEW_POSITION = 'newPosition';
+    private const FIELD_VALUE = 'fieldValue';
+    private const DASH = "-";
+    private const PLUS = "+";
+    private const SLASH = "/";
+    private const UNDERSCORE = "_";
+    private const EQUAL = '=';
+    private const EMPTY_STR = '';
+    private const INT = 'int';
+    private const BOOL = 'bool';
+    private const DATE = 'date';
+    private const BITS = 'bits';
+    private const LIST_TYPE = 'list';
+    private const LANGUAGE = 'language';
+    private const NEGATIVE_BIT = '0';
+
+    private static $padLeftCalls = [];
+
+    /**
 	 * @param $bitString
 	 * @return array
 	 */
@@ -77,8 +95,15 @@ class Bits
 	 */
 	public static function padLeft(string $string, int $leftPadding): string
 	{
-	    $padding = self::validPadding($leftPadding);
-		return str_repeat('0', $padding) . $string;
+	    $padLeftCallKey = "$string-$leftPadding";
+	    if (array_key_exists($padLeftCallKey, static::$padLeftCalls)) {
+            $padLeftCall = static::$padLeftCalls[$padLeftCallKey];
+        } else {
+            $padding = self::validPadding($leftPadding);
+            $padLeftCall = str_repeat(self::NEGATIVE_BIT, $padding) . $string;
+            static::$padLeftCalls[$padLeftCallKey] = $padLeftCall;
+        }
+        return $padLeftCall;
 	}
 
 	/**
@@ -89,7 +114,7 @@ class Bits
 	public static function padRight(string $string, int $rightPadding): string
 	{
         $padding = self::validPadding($rightPadding);
-		return $string . str_repeat('0', $padding);
+		return $string . str_repeat(self::NEGATIVE_BIT, $padding);
 	}
 
     /**
@@ -123,7 +148,7 @@ class Bits
      */
 	private static function encodeIntToBits(int $number, int $numBits = null): string
 	{
-		$bitString = "";
+		$bitString = self::EMPTY_STR;
 		if (is_numeric($number)) {
 			$bitString = decbin(intval($number, 10));
 		}
@@ -193,14 +218,14 @@ class Bits
         }
 
 		// replace unsafe characters
-		$string = str_replace("-", "+", $string);
-		$string = str_replace("_", "/", $string);
+		$string = str_replace(self::DASH, self::PLUS, $string);
+		$string = str_replace(self::UNDERSCORE, self::SLASH, $string);
 
 		$bytes = base64_decode($string, true);
 		if ($bytes === false) {
 			throw new InvalidConsentStringException();
 		}
-		$inputBits = "";
+		$inputBits = self::EMPTY_STR;
 		$bytesLength = strlen($bytes);
 		for ($i = 0; $i < $bytesLength; $i++) {
 			$bitString = decbin(ord($bytes[$i]));
@@ -247,7 +272,7 @@ class Bits
 	public static function decodeConsentStringBitValue(string $bitString, array $definitionMap): array
 	{
 		$decodedObject = self::decodeFields($bitString, $definitionMap['fields']);
-		unset($decodedObject['newPosition']);
+		unset($decodedObject[self::NEW_POSITION]);
 
 		return $decodedObject;
 	}
@@ -262,26 +287,26 @@ class Bits
 	public static function encodeField(array $input, Field $field, bool $validate = true): string
 	{
 		if ($validate && (! $field->getValidator()($input))) {
-			return '';
+			return self::EMPTY_STR;
 		}
 		$bitCount = $field->getNumBits()($input);
 		$inputValue = $input[$field->getName()];
-		$fieldValue = is_null($inputValue) ? '' : $inputValue;
+		$fieldValue = is_null($inputValue) ? self::EMPTY_STR : $inputValue;
 		switch ($field->getType()) {
-			case 'int':
+			case self::INT:
 				return self::encodeIntToBits($fieldValue, $bitCount);
-			case 'bool':
+			case self::BOOL:
 				return self::encodeBoolToBits($fieldValue);
-			case 'date':
+			case self::DATE:
 				return self::encodeDateToBits($fieldValue, $bitCount);
-			case 'bits':
+			case self::BITS:
 				return substr(self::padRight($fieldValue, $bitCount - strlen($fieldValue)), 0, $bitCount);
-			case 'list':
+			case self::LIST_TYPE:
 				$reduce = function ($acc, $listValue) use ($field) {
 					return $acc . self::encodeFields($listValue, $field->getFields());
 				};
-				return array_reduce($fieldValue, $reduce, '');
-			case 'language':
+				return array_reduce($fieldValue, $reduce, self::EMPTY_STR);
+			case self::LANGUAGE:
 				return self::encodeLanguageToBits($fieldValue, $bitCount);
 			default:
 				throw new InvalidEncodingTypeException();
@@ -299,13 +324,13 @@ class Bits
 			return $acc . self::encodeField($input, $field);
 		};
 
-		return array_reduce($fields, $reduce, '');
+		return array_reduce($fields, $reduce, self::EMPTY_STR);
 	}
 
 	public static function encodeBitStringToBase64(string $bitString): string {
 		// Pad length to multiple of 8
 		$paddedBinaryValue = self::padRight($bitString, 7 - ((strlen($bitString) + 7) % 8));
-		$bytes = "";
+		$bytes = self::EMPTY_STR;
 		for ($i = 0; $i < strlen($paddedBinaryValue); $i += 8) {
 			$bytes .= chr(intval(substr($paddedBinaryValue, $i, 8), 2));
 		}
@@ -318,12 +343,12 @@ class Bits
 	 */
 	private static function urlSafeB64Encode(string $bytes): string {
 		return str_replace(
-			"+",
-			"-",
+			self::PLUS,
+            self::DASH,
 			str_replace(
-				"/",
-				"_",
-				rtrim(base64_encode($bytes), '=')
+				self::SLASH,
+                self::UNDERSCORE,
+				rtrim(base64_encode($bytes), self::EQUAL)
 			)
 		);
 	}
@@ -340,28 +365,28 @@ class Bits
 	{
 		if (! $field->getValidator()($output)) {
 			// Not decoding this field so make sure we start parsing the next field at the same point
-			return ['newPosition' => $startPosition];
+			return [self::NEW_POSITION => $startPosition];
 		}
 
 		$returnValue = [];
 		$bitCount = $field->getNumBits()($output);
 		if (! is_null($bitCount)) {
-			$returnValue['newPosition'] = $startPosition + $bitCount;
+			$returnValue[self::NEW_POSITION] = $startPosition + $bitCount;
 		}
 
 		switch ($field->getType()) {
-			case 'int':
-				return array_merge(['fieldValue' => self::decodeBitsToInt($bitString, $startPosition, $bitCount)], $returnValue);
-			case 'bool':
-				return array_merge(['fieldValue' => self::decodeBitsToBool($bitString, $startPosition)], $returnValue);
-			case 'date':
-				return array_merge(['fieldValue' => self::decodeBitsToDate($bitString, $startPosition, $bitCount)], $returnValue);
-			case 'bits':
-				return array_merge(['fieldValue' => substr($bitString, $startPosition, $bitCount)], $returnValue);
-			case 'list':
+			case self::INT:
+				return array_merge([self::FIELD_VALUE => self::decodeBitsToInt($bitString, $startPosition, $bitCount)], $returnValue);
+			case self::BOOL:
+				return array_merge([self::FIELD_VALUE => self::decodeBitsToBool($bitString, $startPosition)], $returnValue);
+			case self::DATE:
+				return array_merge([self::FIELD_VALUE => self::decodeBitsToDate($bitString, $startPosition, $bitCount)], $returnValue);
+			case self::BITS:
+				return array_merge([self::FIELD_VALUE => substr($bitString, $startPosition, $bitCount)], $returnValue);
+			case self::LIST_TYPE:
 				return array_merge(self::decodeList($bitString, $output, $startPosition, $field), $returnValue);
-			case 'language':
-				return array_merge(['fieldValue' => self::decodeBitsToLanguage($bitString, $startPosition, $bitCount)], $returnValue);
+			case self::LANGUAGE:
+				return array_merge([self::FIELD_VALUE => self::decodeBitsToLanguage($bitString, $startPosition, $bitCount)], $returnValue);
 			default:
 				throw new InvalidEncodingTypeException();
 		}
@@ -386,12 +411,12 @@ class Bits
 		$fieldValue = [];
 		for ($i = 0; $i < $listEntryCount; $i++) {
 			$decodedFields = self::decodeFields($bitString, $fields, $newPosition);
-			$newPosition = $decodedFields['newPosition'];
-			unset($decodedFields['newPosition']);
+			$newPosition = $decodedFields[self::NEW_POSITION];
+			unset($decodedFields[self::NEW_POSITION]);
 			$fieldValue[] = $decodedFields;
 		}
 
-		return ['fieldValue' => $fieldValue, 'newPosition' => $newPosition];
+		return [self::FIELD_VALUE => $fieldValue, self::NEW_POSITION => $newPosition];
 	}
 
 	/**
@@ -420,8 +445,8 @@ class Bits
 		$decodedObject = [];
 		foreach ($fields as $field) {
             $fieldDecoded = self::decodeField($bitString, $decodedObject, $position, $field);
-            $fieldValue = isset($fieldDecoded['fieldValue']) ? $fieldDecoded['fieldValue'] : null;
-            $newPosition = isset($fieldDecoded['newPosition']) ? $fieldDecoded['newPosition'] : null;
+            $fieldValue = isset($fieldDecoded[self::FIELD_VALUE]) ? $fieldDecoded[self::FIELD_VALUE] : null;
+            $newPosition = isset($fieldDecoded[self::NEW_POSITION]) ? $fieldDecoded[self::NEW_POSITION] : null;
             if (! is_null($fieldValue)) {
                 $decodedObject[$field->getName()] = $fieldValue;
             }
@@ -429,7 +454,7 @@ class Bits
                 $position = $newPosition;
             }
         }
-		$decodedObject['newPosition'] = $position;
+		$decodedObject[self::NEW_POSITION] = $position;
 
 		return $decodedObject;
 	}
