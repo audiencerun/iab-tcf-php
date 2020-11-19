@@ -4,13 +4,8 @@
         bootstrap="vendor/autoload.php"
         colors="true"
         verbose="true"
-        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/8.5/phpunit.xsd"
 >
-    <coverage>
-        <include>
-            <directory suffix=".php">src/</directory>
-        </include>
-    </coverage>
     <testsuites>
         <testsuite name="TCFv1">
             <directory>./tests/TCFv1</directory>
@@ -19,4 +14,9 @@
             <directory>./tests/TCFv2</directory>
         </testsuite>
     </testsuites>
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">src</directory>
+        </whitelist>
+    </filter>
 </phpunit>
