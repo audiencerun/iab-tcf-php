@@ -1,4 +1,6 @@
 # PHP Library for Parsing the IAB TC String
+[![Latest Stable Version](https://poser.pugx.org/audiencerun/iabtcf/v)](//packagist.org/packages/audiencerun/iabtcf) [![Total Downloads](https://poser.pugx.org/audiencerun/iabtcf/downloads)](//packagist.org/packages/audiencerun/iabtcf) [![Latest Unstable Version](https://poser.pugx.org/audiencerun/iabtcf/v/unstable)](//packagist.org/packages/audiencerun/iabtcf) [![License](https://poser.pugx.org/audiencerun/iabtcf/license)](//packagist.org/packages/audiencerun/iabtcf)
+
 ## Fork of https://github.com/dynata/iab-tcf-php
 
 This project includes a PHP Library for working with: 

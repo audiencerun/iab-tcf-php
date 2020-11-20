@@ -1,8 +1,9 @@
 {
-    "name": "blackcover/iabtcf",
+    "name": "audiencerun/iabtcf",
     "description": "Fork of https://github.com/dynata/iab-tcf-php",
     "version": "1.0.0",
     "type": "library",
+    "license": "Apache-2.0",
     "keywords": [
         "IAB",
         "Consent String",
