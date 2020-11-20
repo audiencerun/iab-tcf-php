@@ -21,7 +21,7 @@ IAB Europe established the TCF to support compliance with the GDPR in the contex
 Require the package via composer (not working at this time)
 
 ```
-composer require blackcover/iabtcf
+composer require audiencerun/iabtcf
 ```
 
 ## Usage
