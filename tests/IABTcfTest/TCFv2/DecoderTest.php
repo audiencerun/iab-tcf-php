@@ -205,4 +205,35 @@ final class DecoderTest extends TestCase
 		$this->assertSame([1, 2], $cs->getCustomPurposesLITransparency());
 
 	}
+
+    /**
+     * @throws InvalidConsentStringException
+     * @throws InvalidSegmentException
+     * @throws InvalidVersionException
+     * @throws UnsupportedVersionException
+     * @test
+     */
+	public function decodeConsentStringHavingPubRestrictionWithoutVendorIds()
+    {
+        //Act
+        $cs = Decoder::decode('CO4bXSUO--TgHADABBDEBDCsAP_AAEPAAAAAGhpR5S5VbWHBYfZ5ZNsQWIxXVMSlI-QCBAaAA6ABAAKQcAAEkmAytAygBAgCIBgEgBBAAAFFCCAAAQAAgAAAAACEIgAEAAAIIAIEiEMAAAJIAAIKCIAABQAIgAEFEAAAikhAAoagTAAAAIF5wHwAAgALAAuABkAEQAKgAWQBCAEOAJgAmgBVAC4AF8AMQAZgA3gCkAFiAMMAaoA4gB-AEZAJSAXMAvwBhAEggKbAWwAtoBeYCgqAUACoAIYATAAuAD8AI4AkEBTYC2AF5jIBIAKgAhgBMAC4APwAjgCmwFsALzHQMQAFgAVAAuABkADgAIAARAAqABoADyAIYAigBMACeAFUALAAXAAvgBiADMAG8AOYAhABDACIAEwAJoAUoAsQBhgDRAHtAPwA_QCLAEcAJSAU8AuYBfgDCAHTAReAkEBKgCmwFsALzAYwAyQBk5KAyAAsAC4AGQAOAAiAB4AEQAJgAVQAuABfADEAGYAQgAhgBEAClAGqAPwAjgBTwEXgLYAXmAycpAoAAWABUAC4AGQAOAAgABUADQAHkAQwBFACYAE8AKQAVQAsABcAC-AGIAMwAcwBCACGAEQAKUAWIA0QBqwD8AP0AiwBHACUgFzAMIAi8BTYC2AF5gMYAZIAycEAACAAgBpAGaDAAQBFiAAQAiwBpCgAAwAAOABAMRAYmRACgABABYAEIAJoApCQAAoACABEAC0JAnAAWABUADIAHAAPAAgABEACoAGgAPIAhgCKAEwAJ4AVQAsABcADeAHMAQgAhgBEACaAFKAMMAaoA9oB-AH6ARwAlIBTwC5gF-AMIAi8BSICmwFsAMkAZOGgEgAqAC4AIYAfgBTwEXgKRAYwAycRAIABUAFwAQwA_ACngIvAUiAychADAKeAlQBk5AACARw.YAAAAAAAAAA');
+
+        //Assert
+        $this->assertEquals(2, $cs->getVersion());
+        $this->assertEquals(3, $cs->getCmpId());
+        $this->assertEquals(1, $cs->getCmpVersion());
+        $this->assertEquals(1, $cs->getConsentScreen());
+        $this->assertEqualsIgnoringCase('DE', $cs->getConsentLanguage());
+        $this->assertEquals(67, $cs->getVendorListVersion());
+        $this->assertEquals(2, $cs->getTcfPolicyVersion());
+        $this->assertTrue($cs->getIsServiceSpecific());
+        $this->assertFalse($cs->getUseNonStandardStacks());
+        $this->assertCount(2, $cs->getSpecialFeatureOptIns());
+        $this->assertCount(10, $cs->getPurposesConsent());
+        $this->assertFalse($cs->getPurposeOneTreatment());
+        $this->assertEqualsIgnoringCase('AA', $cs->getPublisherCC());
+        $this->assertCount(177, $cs->getVendorConsent());
+        $this->assertCount(33, $cs->getVendorLegitimateInterest());
+        $this->assertCount(16, $cs->getPublisherRestrictions());
+    }
 }
