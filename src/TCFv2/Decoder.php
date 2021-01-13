@@ -54,20 +54,22 @@ abstract class Decoder {
 					$returnValue['purposesLITransparency'] = Bits::decodeBitsToIds($decoded['purposesLITransparencyBitString']);
 					if (! empty($decoded['pubRestrictions'])) {
 						$returnValue['pubRestrictions'] = [];
-						foreach ($decoded['pubRestrictions'] as $pubRestriction) {
-							$restriction = new RestrictionType($pubRestriction['restrictionType']);
-							$vendorIds = [];
-							foreach ($pubRestriction['vendorIds'] as $vendorId) {
-								if ($vendorId['isARange']) {
-									for ($i = $vendorId['startId']; $i <= $vendorId['endId']; $i++) {
-										$vendorIds[] = $i;
-									}
-								} else {
-									$vendorIds[] = $vendorId['startId'];
-								}
-							}
-							$returnValue['pubRestrictions'][] = new PublisherRestriction($pubRestriction['purposeId'], $restriction, $vendorIds);
-						}
+						if (is_array($decoded['pubRestrictions'])) {
+                            foreach ($decoded['pubRestrictions'] as $pubRestriction) {
+                                $restriction = new RestrictionType($pubRestriction['restrictionType']);
+                                $vendorIds = [];
+                                foreach ($pubRestriction['vendorIds'] as $vendorId) {
+                                    if ($vendorId['isARange']) {
+                                        for ($i = $vendorId['startId']; $i <= $vendorId['endId']; $i++) {
+                                            $vendorIds[] = $i;
+                                        }
+                                    } else {
+                                        $vendorIds[] = $vendorId['startId'];
+                                    }
+                                }
+                                $returnValue['pubRestrictions'][] = new PublisherRestriction($pubRestriction['purposeId'], $restriction, $vendorIds);
+                            }
+                        }
 					}
 					if ($decoded['vendorConsentIsRangeEncoding']) {
 						$returnValue['vendorConsentIds'] = Range::decodeRange($decoded['vendorConsentMaxVendorId'], $decoded['vendorConsentRangeList'], false);
