@@ -1,7 +1,7 @@
 {
     "name": "audiencerun/iabtcf",
     "description": "Fork of https://github.com/dynata/iab-tcf-php",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "type": "library",
     "license": "Apache-2.0",
     "keywords": [
@@ -12,12 +12,12 @@
     ],
     "authors": [
         {
-            "name": "Thomas Heniart",
+            "name": "AudienceRun",
             "email": "t.heniart@blackcover.fr"
         }
     ],
     "require": {
-        "php": "^7.2",
+        "php": "^7.0|^8.0",
         "ext-json": "*"
     },
     "autoload": {
